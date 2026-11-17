@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}{{ seller.shop_name }} — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="store-hero"><span class="store-avatar">{{ seller.shop_name[:1] }}</span><div><span class="eyebrow">VERIFIED TUKISHOP SELLER</span><h1>{{ seller.shop_name }}</h1><p>{{ seller.description or "Welcome to our shop." }}</p></div></section>
+<section class="section-block"><div class="section-heading"><h2>Shop products</h2></div>{% if products %}<div class="product-grid">{% for product in products %}{% include "_product_card.html" %}{% endfor %}</div>{% else %}<p class="muted">No products listed yet.</p>{% endif %}</section>
+{% endblock %}

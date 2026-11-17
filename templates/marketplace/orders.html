@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}My orders — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block narrow-content"><div class="section-heading"><div><span class="eyebrow">YOUR PURCHASES</span><h1>My orders</h1></div></div>
+  {% for order in orders %}<a class="order-card" href="{{ url_for('marketplace.order_detail', order_id=order.id) }}"><div><strong>Order #{{ order.id }}</strong><span class="status-pill">{{ statuses.get(order.status, order.status) }}</span></div><p>{{ order.created_at.strftime('%d %b %Y') }} · {{ order.seller_orders|length }} seller package(s)</p><div class="order-bottom"><span>Payment: {{ order.payment_status|replace('_',' ')|title }}</span><strong>৳{{ order.total }}</strong></div></a>{% else %}<div class="empty-state"><h2>No orders yet</h2><p>Your orders and delivery updates will appear here.</p><a class="button" href="{{ url_for('marketplace.home') }}">Explore products</a></div>{% endfor %}
+</section>
+{% endblock %}

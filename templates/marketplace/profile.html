@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}My profile — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block narrow-content">
+  <div class="section-heading">
+    <div><span class="eyebrow">YOUR ACCOUNT</span><h1>My profile</h1><p class="muted">Manage your personal details, delivery addresses, and shopping activity.</p></div>
+  </div>
+
+  <div class="stats-grid">
+    <a class="stat-card" href="{{ url_for('marketplace.my_orders') }}"><span>Orders</span><strong>{{ order_count }}</strong><span>View order history →</span></a>
+    <a class="stat-card" href="{{ url_for('marketplace.wishlist') }}"><span>Wishlist</span><strong>{{ wishlist_count }}</strong><span>View saved items →</span></a>
+    <a class="stat-card" href="{{ url_for('marketplace.addresses') }}"><span>Delivery addresses</span><strong>{{ addresses|length }}</strong><span>Manage addresses →</span></a>
+  </div>
+
+  <form method="post" enctype="multipart/form-data" class="panel-card settings-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>Personal details</h2>
+    <div class="profile-photo-field">
+      {% if current_user.avatar %}<img class="profile-photo" src="{{ url_for('marketplace.profile_avatar') }}" alt="Current profile photo">
+      {% else %}<span class="profile-avatar profile-photo-placeholder" aria-hidden="true">{{ current_user.name[:1]|upper }}</span>{% endif %}
+      <label for="profile-avatar">Profile photo<input id="profile-avatar" name="avatar" type="file" accept="image/jpeg,image/png,image/webp"><small class="muted">JPG, PNG, or WEBP. Maximum 4 MB.</small></label>
+    </div>
+    <div class="form-grid">
+      <label for="profile-name">Full name<input id="profile-name" name="name" value="{{ current_user.name }}" maxlength="100" required></label>
+      <label for="profile-phone">Mobile number<input id="profile-phone" name="phone" type="tel" inputmode="tel" value="{{ current_user.phone }}" maxlength="20" required></label>
+    </div>
+    <label for="profile-username">Username</label>
+    <input id="profile-username" value="{{ current_user.username }}" readonly aria-describedby="username-help">
+    <p id="username-help" class="muted small">Your username is used to sign in and cannot be changed here.</p>
+    <button class="button" type="submit">Save profile details</button>
+  </form>
+
+  <div class="section-heading"><div><span class="eyebrow">DELIVERY</span><h2>Saved addresses</h2></div><a class="button button-outline" href="{{ url_for('marketplace.addresses') }}">Manage addresses</a></div>
+  {% for address in addresses %}
+    <article class="panel-card">
+      <div class="record-heading">
+        <div>
+          <span class="eyebrow">{{ address.label }}{% if address.is_default %} · DEFAULT{% endif %}</span>
+          <h2>{{ address.recipient }}</h2>
+          <p>{{ address.phone }}</p>
+          <p>{{ address.address }}, {{ address.upazila }}, {{ address.district }}</p>
+        </div>
+      </div>
+    </article>
+  {% else %}
+    <div class="empty-state"><h2>No delivery address saved</h2><p>Add an address to make checkout faster.</p><a class="button" href="{{ url_for('marketplace.addresses') }}">Add delivery address</a></div>
+  {% endfor %}
+
+  <div class="notice-card">For your safety, TUKISHOP does not save wallet PINs or OTPs. Manage your password from the profile menu.</div>
+</section>
+{% endblock %}

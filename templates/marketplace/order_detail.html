@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Order #{{ order.id }} — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block narrow-content"><nav class="breadcrumbs"><a href="{{ url_for('marketplace.my_orders') }}">My orders</a><span>/</span><span>Order #{{ order.id }}</span></nav><div class="section-heading"><div><span class="eyebrow">ORDER DETAILS</span><h1>Order #{{ order.id }}</h1></div><span class="status-pill">{{ statuses.get(order.status, order.status) }}</span></div>
+  <div class="order-detail-card"><p>Placed {{ order.created_at.strftime('%d %b %Y, %H:%M UTC') }} · Payment {{ order.payment_status|replace('_',' ')|title }}</p><h2>Delivery</h2><p>{{ order.name }} · {{ order.phone }}<br>{{ order.address }}, {{ order.upazila }}, {{ order.district }}</p></div>
+  {% for seller_order in order.seller_orders %}<article class="order-detail-card"><h2>{{ seller_order.seller.shop_name if seller_order.seller else site_name }} <span class="status-pill">{{ statuses.get(seller_order.status, seller_order.status) }}</span></h2>
+    {% for item in seller_order.items %}<div class="order-line"><span>{{ item.quantity }} × {{ item.product_name }}</span><strong>৳{{ item.unit_price * item.quantity }}</strong></div>{% endfor %}
+    <div class="order-line"><span>Package subtotal</span><strong>৳{{ seller_order.subtotal }}</strong></div><div class="order-line"><span>Shipping</span><strong>৳{{ seller_order.shipping }}</strong></div>
+  </article>{% endfor %}
+  <div class="order-detail-card order-totals"><div><span>Subtotal</span><strong>৳{{ order.subtotal }}</strong></div><div><span>Discount</span><strong>− ৳{{ order.discount }}</strong></div><div><span>Shipping</span><strong>৳{{ order.shipping }}</strong></div><div class="total-line"><span>Total</span><strong>৳{{ order.total }}</strong></div></div>
+  {% if order.payment_method != 'cod' and order.payment_status not in ['paid','refund_pending','refunded'] %}
+    {% set method = methods.get(order.payment_method) %}
+    <section class="payment-box"><span class="eyebrow">MANUAL PAYMENT</span><h2>Pay with {{ method.title if method else order.payment_method|title }}</h2>
+      {% if method and method.account_number %}<p>Send <strong>৳{{ order.total }}</strong> to <strong class="wallet-number">{{ method.account_number }}</strong> ({{ method.account_type }}). {{ method.instructions }}</p>
+      <p class="muted small">After sending, submit the sender number and transaction ID. Admin will verify it manually. Never share your wallet PIN or OTP.</p>
+      <form method="post" action="{{ url_for('marketplace.submit_payment', order_id=order.id) }}" enctype="multipart/form-data"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><div class="form-grid"><div><label for="sender">Sender mobile number</label><input id="sender" name="sender_number" inputmode="tel" required></div><div><label for="trx">Transaction ID</label><input id="trx" name="transaction_id" maxlength="80" required></div></div><label for="receipt">Payment receipt image (optional)</label><input id="receipt" type="file" name="receipt" accept="image/jpeg,image/png,image/webp"><button class="button" type="submit">Submit for verification</button></form>
+      {% else %}<p>Payment number is not configured. Please contact support; do not send money to an unverified number.</p>{% endif %}
+    </section>
+    {% for submission in submissions %}<div class="notice-card">Payment {{ submission.status|title }} · {{ submission.method|title }} · Txn {{ submission.transaction_id }}{% if submission.note %}<p>{{ submission.note }}</p>{% endif %}</div>{% endfor %}
+  {% elif order.payment_method == 'cod' %}<div class="notice-card">Cash on delivery selected. Pay the delivery agent when the order arrives.</div>{% endif %}
+  {% if order.status == 'placed' %}<form method="post" action="{{ url_for('marketplace.request_cancel', order_id=order.id) }}" class="cancel-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline" type="submit">Request cancellation</button></form>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}{{ product.name }} — {{ site_name }}{% endblock %}
+{% block content %}
+  <nav class="breadcrumbs"><a href="{{ url_for('marketplace.home') }}">Home</a><span>/</span><span>{{ product.category.name }}</span><span>/</span><span>{{ product.name }}</span></nav>
+  <section class="product-detail">
+    <div class="detail-image">{% if product.image %}<img src="{{ url_for('static', filename='uploads/' ~ product.image) }}" alt="{{ product.name }}">{% else %}<span class="image-placeholder">TUKISHOP</span>{% endif %}</div>
+    <div class="detail-info"><span class="eyebrow">{{ product.category.name }}</span><h1>{{ product.name }}</h1>
+      <div class="rating-line">{% if average %}<span class="stars">★ {{ average }}</span><span>{{ reviews|length }} verified review{{ '' if reviews|length == 1 else 's' }}</span>{% else %}<span>No reviews yet</span>{% endif %}</div>
+      <div class="detail-price">৳{{ product.price }} {% if product.old_price > product.price %}<del>৳{{ product.old_price }}</del>{% endif %}</div>
+      <p class="muted">{{ product.description or "A quality find from the TUKISHOP marketplace." }}</p>
+      <p class="stock-line">{% if product.stock > 0 %}{{ product.stock }} available{% else %}Out of stock{% endif %}</p>
+      {% if product.stock > 0 %}<form method="post" action="{{ url_for('marketplace.cart_add', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button" type="submit">Add to cart</button></form>{% endif %}
+      {% if current_user.is_authenticated %}<form method="post" action="{{ url_for('marketplace.toggle_wishlist', product_id=product.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline" type="submit">♡ Save to wishlist</button></form>{% else %}<a class="button button-outline" href="{{ url_for('auth.login') }}">♡ Save to wishlist</a>{% endif %}
+      <a class="seller-callout" href="{{ url_for('marketplace.seller_store', seller_id=seller.id) if seller else '#' }}"><span class="eyebrow">SOLD BY</span><strong>{{ seller.shop_name if seller else site_name }}</strong><span>Visit seller shop →</span></a>
+    </div>
+  </section>
+  <section class="section-block review-block"><div class="section-heading"><div><span class="eyebrow">BUYER FEEDBACK</span><h2>Reviews</h2></div></div>
+    {% for review in reviews %}<article class="review-card"><div class="stars">{{ "★" * review.stars }}{{ "☆" * (5-review.stars) }}</div><p>{{ review.text }}</p><small>{{ review.customer.name }} · Verified purchase</small></article>{% else %}<p class="muted">No reviews yet.</p>{% endfor %}
+    {% if current_user.is_authenticated %}<form method="post" action="{{ url_for('marketplace.add_review', product_id=product.id) }}" class="review-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><h3>Write a verified review</h3><label for="stars">Rating</label><select id="stars" name="stars"><option value="5">5 — Excellent</option><option value="4">4 — Good</option><option value="3">3 — Okay</option><option value="2">2 — Poor</option><option value="1">1 — Bad</option></select><label for="review-text">Your review</label><textarea id="review-text" name="text" minlength="3" maxlength="1000" required></textarea><button class="button" type="submit">Submit review</button></form>{% endif %}
+  </section>
+{% endblock %}

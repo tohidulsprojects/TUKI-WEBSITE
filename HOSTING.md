@@ -1,42 +1,43 @@
-# Putting Tuki online (PythonAnywhere, step by step)
+# TUKISHOP production deployment
 
-PythonAnywhere runs Python sites and keeps your files (database, photos), so accounts and orders stay saved.
-A free account gives you `yourusername.pythonanywhere.com` with HTTPS. Your own domain (like tukibd.com) needs a paid plan.
-Check their site for current plans and limits before you start.
+## Recommended services
 
-1. Make an account at pythonanywhere.com.
-2. **Files** tab: upload `tuki-shop.zip` to your home folder.
-3. **Consoles** tab, start a **Bash** console, then run:
-   ```
-   unzip tuki-shop.zip
-   cd tuki-shop
-   python3 -m venv ~/tuki-env
-   source ~/tuki-env/bin/activate
-   pip install -r requirements.txt
-   python app.py create-admin
-   ```
-   (choose your admin username and a strong password of 12+ characters)
-4. **Web** tab: **Add a new web app**, choose **Manual configuration** and a Python version (3.10 or newer).
-5. On the Web tab set **Virtualenv** to `/home/YOURUSERNAME/tuki-env`.
-6. On the Web tab open the **WSGI configuration file**, delete everything in it and paste:
-   ```python
-   import os, sys
-   path = "/home/YOURUSERNAME/tuki-shop"
-   if path not in sys.path:
-       sys.path.insert(0, path)
-   os.environ["TUKI_HTTPS"] = "1"
-   os.environ["TUKI_PROXY"] = "1"
-   os.environ["TUKI_SECRET_KEY"] = "PASTE-A-LONG-RANDOM-TEXT-HERE"
-   os.environ["TUKI_ADMIN_PATH"] = "pick-your-secret-door-name"
-   from app import app as application
-   ```
-   Replace YOURUSERNAME. For the secret key, make a long random text (60+ characters).
-7. On the Web tab press the green **Reload** button, then open `https://YOURUSERNAME.pythonanywhere.com`.
-8. Admin login: `https://YOURUSERNAME.pythonanywhere.com/pick-your-secret-door-name/login` (or tap the shop name 3 times).
-9. In **Settings** in the admin, add your phone, WhatsApp and Facebook, and in **Products** add your products.
-10. Web tab, **Security** section: switch on **Force HTTPS**.
+- Python 3.10+ application runtime with Gunicorn.
+- Managed PostgreSQL database with automated point-in-time backups.
+- Redis for rate limiting when using multiple Gunicorn workers or app instances.
+- Persistent/object storage for product photos and private profile photos/payment receipts.
+- HTTPS domain and server-side environment variables.
 
-Every week press **Download backup** in the admin (Security tab) and keep the zip safe.
-Check the PythonAnywhere Web tab now and then, free sites may need a renew button pressed.
+The repository does not include credentials. Configure secrets in the hosting provider's environment settings.
 
-If something shows an error, open the **Error log** link on the Web tab and send me the last lines.
+## Environment
+
+Set at minimum:
+
+```text
+DATABASE_URL=postgresql+psycopg://USER:PASSWORD@HOST:5432/tukiahop
+TUKI_SECRET_KEY=<long-random-secret>
+TUKI_HTTPS=1
+RATELIMIT_STORAGE_URI=redis://<redis-host>:6379/0
+```
+
+Use the hosting provider's exact database and Redis URLs. Do not commit credentials or paste them into public issues.
+
+## Deploy steps
+
+1. Create the PostgreSQL database and Redis instance.
+2. Build the Python environment and install `requirements.txt`.
+3. Set the environment variables above and ensure the upload volume is persistent. Store private profile photos and payment receipts outside the public static directory.
+4. Run `flask --app app init-db` for the first deployment. For subsequent releases, run reviewed database migrations with `flask --app app db upgrade`.
+5. Create the initial admin using `flask --app app create-admin` in a secure console.
+6. Start the web process with `gunicorn --workers 2 --bind 0.0.0.0:$PORT app:app` (adapt the port syntax for your platform).
+7. Confirm HTTPS, buyer checkout, seller approval, admin login, manual payment verification, image uploads, database backup, and restore on staging before launch.
+
+## Operational safety
+
+- Keep the database private; restrict it to the application network.
+- Keep uploaded payment receipts private. The application serves them only to administrators.
+- Use a shared Redis rate-limit store in multi-worker production; in-memory limits are not shared across workers.
+- Back up PostgreSQL and uploaded files on independent schedules; encrypt them and test restoration.
+- Never store payment PINs or OTPs. Verify manual wallet payments in the provider's merchant/personal wallet records.
+- Monitor errors and disk usage. Configure log retention so customer phone numbers and payment identifiers are not unnecessarily exposed.

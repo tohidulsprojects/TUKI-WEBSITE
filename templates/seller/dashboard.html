@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block title %}Seller center — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block admin-content"><div class="section-heading"><div><span class="eyebrow">SELLER CENTER</span><h1>{{ profile.shop_name }}</h1><p class="muted">Shop status: <strong>{{ profile.status|title }}</strong> · Commission: {{ profile.commission_percent }}%</p></div></div>{% include "seller/_nav.html" %}
+{% if profile.status == 'pending' %}<div class="notice-card">Your application is being reviewed. Once approved, you can publish products and process orders.</div>{% elif profile.status == 'rejected' or profile.status == 'suspended' %}<div class="notice-card">Your shop is {{ profile.status }}. Contact TUKISHOP support for help.</div>{% endif %}
+<div class="stats-grid"><article class="stat-card"><span>Products</span><strong>{{ product_count }}</strong></article><article class="stat-card"><span>Available for payout*</span><strong>৳{{ earned }}</strong></article><article class="stat-card"><span>Recent seller orders</span><strong>{{ orders|length }}</strong></article></div>
+{% if profile.status == 'approved' %}<form method="post" action="{{ url_for('seller.request_payout') }}" class="panel-card inline-admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Payout request amount ৳<input type="number" name="amount" min="1" max="{{ earned }}" required></label><button class="button" type="submit">Request payout</button></form>{% endif %}
+<p class="muted small">*Delivered order earnings after marketplace commission, minus pending and completed payout requests.</p>
+<h2 class="subheading">Recent orders</h2>{% for order in orders %}<a class="order-card" href="{{ url_for('seller.orders') }}"><div><strong>Package #{{ order.id }} · Order #{{ order.order_id }}</strong><span class="status-pill">{{ order.status|title }}</span></div><p>{{ order.order.name }} · {{ order.order.created_at.strftime('%d %b %Y') }}</p><strong>৳{{ order.subtotal }}</strong></a>{% else %}<p class="muted">New orders will show here.</p>{% endfor %}
+<h2 class="subheading">Payout history</h2>{% for payout in payouts %}<div class="compact-row panel-card"><span><strong>৳{{ payout.amount }} · {{ payout.method|title }}</strong><small>{{ payout.created_at.strftime('%d %b %Y') }} · {{ payout.reference }}</small></span><span class="status-pill">{{ payout.status|title }}</span></div>{% else %}<p class="muted">No payout requests.</p>{% endfor %}
+</section>
+{% endblock %}

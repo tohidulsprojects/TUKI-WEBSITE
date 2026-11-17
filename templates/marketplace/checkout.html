@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Checkout — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block narrow-content"><div class="section-heading"><div><span class="eyebrow">ALMOST THERE</span><h1>Checkout</h1></div></div>
+  <form method="post" class="form-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <h2>Delivery details</h2>
+    {% if addresses %}<label for="address_id">Use a saved address (optional)</label><select id="address_id" name="address_id"><option value="">Enter a new address below</option>{% for address in addresses %}<option value="{{ address.id }}" {% if address.is_default %}selected{% endif %}>{{ address.label }} · {{ address.recipient }} · {{ address.upazila }}, {{ address.district }}</option>{% endfor %}</select><p class="muted small">If selected, the saved address will be used for this order.</p>{% endif %}
+    <div class="form-grid"><div><label for="name">Recipient name</label><input id="name" name="name" value="{{ current_user.name }}" maxlength="100"></div><div><label for="phone">Mobile number</label><input id="phone" name="phone" value="{{ current_user.phone }}" inputmode="tel"></div></div>
+    <div class="form-grid"><div><label for="district">District</label><select id="district" name="district">{% for district in districts %}<option value="{{ district }}" {% if district == 'Dhaka' %}selected{% endif %}>{{ district }}</option>{% endfor %}</select></div><div><label for="upazila">Upazila / Thana</label><input id="upazila" name="upazila" maxlength="80"></div></div>
+    <label for="address">Full delivery address</label><textarea id="address" name="address" minlength="5" maxlength="300"></textarea><p><a href="{{ url_for('marketplace.addresses') }}">Manage saved addresses</a></p>
+    <h2>Payment method</h2>
+    <div class="payment-options">
+      {% for method in methods %}<label class="payment-choice"><input type="radio" name="payment_method" value="{{ method.slug }}" required><span><strong>{{ method.title }}</strong><small>Pay using the number shown after placing your order</small></span></label>{% endfor %}
+      <label class="payment-choice"><input type="radio" name="payment_method" value="cod" required><span><strong>Cash on delivery</strong><small>Pay when your order arrives</small></span></label>
+    </div>
+    <label for="coupon">Coupon code (optional)</label><input id="coupon" name="coupon_code" maxlength="40" placeholder="Enter coupon code">
+    <div class="order-summary"><div><span>Items subtotal</span><strong>৳{{ subtotal }}</strong></div><div><span>Shipping</span><span>Calculated for seller packages</span></div><p class="muted small">Exact shipping, discount and final total will be confirmed on the order page.</p></div>
+    <button class="button button-full" type="submit">Place order securely</button>
+  </form>
+</section>
+{% endblock %}

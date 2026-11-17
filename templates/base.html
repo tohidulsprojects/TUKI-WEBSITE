@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
+  <meta name="theme-color" content="#172b4d">
+  <title>{% block title %}{{ site_name }}{% endblock %}</title>
+  <meta name="description" content="{{ site_tagline }}">
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='logo.png') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="site-header">
+    <div class="topline">
+      <a class="brand" href="{{ url_for('marketplace.home') }}"><img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="{{ site_name }}"></a>
+      <form class="searchbar" action="{{ url_for('marketplace.home') }}" method="get">
+        <label class="sr-only" for="site-search">Search products</label>
+        <input id="site-search" name="q" value="{{ request.args.get('q', '') }}" placeholder="Search products, brands and more">
+        <button type="submit" aria-label="Search">⌕</button>
+      </form>
+      <nav class="head-actions" aria-label="Account navigation">
+        <a href="{{ url_for('marketplace.cart') }}">Cart</a>
+        {% if current_user.is_authenticated %}
+          <details class="profile-menu">
+            <summary class="profile-trigger" aria-label="Open profile menu" title="Profile">
+              {% if current_user.avatar %}<img class="profile-avatar profile-avatar-image" src="{{ url_for('marketplace.profile_avatar') }}" alt="">
+              {% else %}<span class="profile-avatar" aria-hidden="true">{{ current_user.name[:1]|upper }}</span>{% endif %}
+            </summary>
+            <div class="profile-dropdown">
+              <div class="profile-identity">
+                {% if current_user.avatar %}<img class="profile-avatar profile-avatar-large profile-avatar-image" src="{{ url_for('marketplace.profile_avatar') }}" alt="">
+                {% else %}<span class="profile-avatar profile-avatar-large" aria-hidden="true">{{ current_user.name[:1]|upper }}</span>{% endif %}
+                <span><strong>{{ current_user.name }}</strong><small>@{{ current_user.username }}</small><small>{{ current_user.phone }}</small></span>
+              </div>
+              <nav class="profile-links" aria-label="Profile menu">
+                <a href="{{ url_for('marketplace.profile') }}">My profile</a>
+                <a href="{{ url_for('marketplace.my_orders') }}">My orders</a>
+                <a href="{{ url_for('marketplace.addresses') }}">Addresses</a>
+                <a href="{{ url_for('marketplace.wishlist') }}">Wishlist</a>
+                <a href="{{ url_for('marketplace.change_password') }}">Change password</a>
+                {% if current_user.role == 'seller' %}<a href="{{ url_for('seller.dashboard') }}">Seller center</a>{% endif %}
+                <form method="post" action="{{ url_for('auth.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="profile-logout" type="submit">Log out</button></form>
+              </nav>
+            </div>
+          </details>
+        {% else %}
+          <a href="{{ url_for('auth.login') }}">Log in</a>
+          <a class="button button-small" href="{{ url_for('auth.register') }}">Create account</a>
+        {% endif %}
+      </nav>
+    </div>
+    <nav class="category-nav" aria-label="Categories">
+      <a href="{{ url_for('marketplace.home') }}">All products</a>
+      {% for category in nav_categories %}
+        <a href="{{ url_for('marketplace.home', category=category.id) }}">{{ category.name }}</a>
+      {% endfor %}
+      <a href="{{ url_for('auth.seller_register') }}">Sell on TUKISHOP</a>
+    </nav>
+  </header>
+  <main class="page-shell">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}<div class="flash-stack">{% for category, message in messages %}<div class="flash {{ category }}" role="status">{{ message }}</div>{% endfor %}</div>{% endif %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="site-footer">
+    <div class="footer-main">
+      <div><a class="brand brand-footer" href="{{ url_for('marketplace.home') }}"><img class="brand-logo" src="{{ url_for('static', filename='logo.png') }}" alt="{{ site_name }}"></a><p>{{ site_tagline }}</p></div>
+      <div><strong>Customer care</strong><a href="{{ url_for('marketplace.contact') }}">Contact support</a><a href="{{ url_for('marketplace.my_orders') }}">Track an order</a><a href="{{ url_for('marketplace.privacy') }}">Privacy policy</a><a href="{{ url_for('marketplace.terms') }}">Terms &amp; conditions</a></div>
+      <div><strong>Marketplace</strong><a href="{{ url_for('auth.seller_register') }}">Become a seller</a>{% if current_user.is_authenticated and current_user.role == 'seller' %}<a href="{{ url_for('seller.dashboard') }}">Seller dashboard</a>{% endif %}</div>
+    </div>
+    <div class="footer-bottom"><span>© {{ site_name }} · Owner: {{ owner_name }} · Developer: {{ developer_name }}</span><span>Made for shoppers in Bangladesh · ৳ BDT</span></div>
+  </footer>
+</body>
+</html>

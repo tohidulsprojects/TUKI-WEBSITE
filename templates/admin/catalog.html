@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Catalog control — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block admin-content"><div class="section-heading"><div><span class="eyebrow">MARKETPLACE STRUCTURE</span><h1>Categories</h1></div></div>{% include "admin/_nav.html" %}
+<form method="post" action="{{ url_for('admin.add_category') }}" class="panel-card inline-admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>New category<input name="name" maxlength="60" required></label><button class="button" type="submit">Add category</button></form>
+{% for category in categories %}<form method="post" action="{{ url_for('admin.update_category', category_id=category.id) }}" class="panel-card inline-admin-form"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label>Name<input name="name" value="{{ category.name }}" required maxlength="60"></label><label class="check-control"><input type="checkbox" name="active" value="1" {% if category.active %}checked{% endif %}> Visible</label><button class="button button-outline" type="submit">Save</button></form>{% endfor %}</section>
+{% endblock %}

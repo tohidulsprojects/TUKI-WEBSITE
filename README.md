@@ -1,61 +1,74 @@
-# Tuki Beauty Shop (HTML, CSS, JavaScript, Python)
+# TUKISHOP
 
-Buyer shop at `/`, protected admin at `/admin` (you can move it to a secret address, see below).
+TUKISHOP is a Bangladesh-focused multi-vendor e-commerce marketplace. The owner is Nayeem; developer credit is TOHIDUL.
 
-## Run on your computer
-1. Install Python 3.10+.
-2. `python -m venv venv`, then activate it (Windows: `venv\Scripts\activate`, Mac/Linux: `source venv/bin/activate`)
-3. `pip install -r requirements.txt`
-4. `python app.py create-admin` (press Enter to use admin username `fuvkyou`, then choose a unique password of 12+ characters when prompted)
-5. `python app.py`, then open http://127.0.0.1:5000 (admin: http://127.0.0.1:5000/admin/login)
+## Marketplace features
 
-## Customer accounts
-Customers sign up with a name, username, phone number and a password (8+ characters), then log in with their username and password to order. Usernames are 3-30 letters, numbers, dots, dashes or underscores. Under **Account** they automatically see **My orders** (items, delivery details, total, status, updated when you change the status in admin), and can change their password. Passwords are stored hashed; wrong logins are rate limited. Existing accounts keep working with their current phone number as their username.
-- There is no SMS or email, so a customer who forgets the password asks you, and you set a new one in the admin under **Customers** (then tell them privately).
-- To also allow orders without an account, start the server with `TUKI_REQUIRE_LOGIN=0`.
+- Buyer accounts with editable name, phone, and private profile photo; saved delivery addresses; wishlists; search, price filters, categories, pagination, cart, order history, and verified product reviews.
+- Seller applications, admin approval, seller shops, product moderation, stock management, seller-specific order packages, commission tracking, and manual payout requests.
+- Admin control for products, categories, seller accounts, orders, wallet payment numbers, payment verification, refunds, COD receipts, coupons, campaigns, support messages, shipping rules, and marketplace settings.
+- Manual bKash, Nagad, Upay, and Rocket payment submissions, plus cash on delivery. Wallet numbers and instructions are edited in Admin → Wallet numbers. Buyers submit sender number and transaction ID; admins verify the payment.
+- Responsive original TUKISHOP theme, reduced-motion support, CSRF protection, secure password hashes, role-based access, upload validation, audit events, and rate limits.
 
-### Staying logged in
-Customers stay logged in on their phone for 30 days (the **Keep me logged in** box is ticked by default; untick it on a shared phone). The login forms are built so the phone or browser offers to save the username and password and fill them in next time. The shop never stores a customer's password itself, only a hash. Admin logins always expire after 2 hours.
+## Local setup
 
-## Change or reset the admin password
-Change it any time in the admin panel (Change password section). If you forget it, run `python app.py create-admin` again and choose a new one.
+Python 3.10+ is recommended.
 
-## Secret admin address
-The shop never shows a link to the admin. To hide it further, set `TUKI_ADMIN_PATH` before starting, e.g. `TUKI_ADMIN_PATH=my-secret-door`, and the login moves to `/my-secret-door/login`.
-This only hides the door. The real lock is your strong password.
+```bash
+python -m venv .venv
+source .venv/bin/activate
+python -m pip install -r requirements.txt
+flask --app app init-db
+flask --app app create-admin
+flask --app app run
+```
 
-## Putting it online
-See `HOSTING.md` for step by step PythonAnywhere instructions. On any host with a proxy in front, set `TUKI_PROXY=1` (and `TUKI_HTTPS=1`) so visitor limits and secure cookies work.
+Open `http://127.0.0.1:5000`. Create the first admin using the CLI prompt; there is no default admin password. The default local database is SQLite under the ignored `instance/` folder.
 
-## Opening the admin login
-- **Secret address:** set `TUKI_ADMIN_PATH` (for example `tuki-owner-7391`) and the login lives at `yourshop/tuki-owner-7391/login`. The shop shows no admin link. Bookmark it, or use Chrome menu > Add to Home screen.
-- **Logo tap:** tapping the shop name 3 times quickly opens the login page. Set `TUKI_LOGO_DOOR=0` to switch this off. Note: anyone who learns the trick can reach the login page, so the real protection is your strong password (wrong guesses are rate limited).
+## PostgreSQL
 
-## What you can manage in the admin
-- **Products**: add, edit, hide, photos. **Orders**: see items and change status. **Customers**: reset a forgotten password.
-- **Reviews**: customers can review a product after their order with it is delivered. Hide or delete any review.
-- **Reports**: sales, orders, average order, top products, new customers and ratings for 24 hours, 7 days, 30 days or all time, plus a CSV download.
-- **Settings**: shop name, main colour, headline, footer, phone / WhatsApp / Facebook (these create the Chat button), delivery charges and free-delivery amount, and categories.
-- **Security**: backup download and admin password.
+Use PostgreSQL for a production marketplace. Set `DATABASE_URL` before starting the application, for example:
 
-## Backup and restore
-In the admin, press **Download backup**. You get a zip with `tuki.db` (products, orders, customers) and an `uploads` folder (photos). Keep it private, it holds customer phone numbers and password hashes.
-To restore on a new server: unzip, copy `tuki.db` next to `app.py`, and copy the files inside `uploads` into `static/uploads/`.
+```text
+postgresql+psycopg://USER:PASSWORD@HOST:5432/tukiahop
+```
 
-## Product photos
-In the admin, choose a JPG, PNG or WEBP photo (max 4 MB) when adding or editing a product. Photos are checked, resized and re-saved as clean JPEG files. Back up `static/uploads/` together with `tuki.db`.
+The app also accepts the common `postgres://` and `postgresql://` URL prefixes and converts them to the psycopg 3 dialect. Do not put database credentials in source files or commit them.
 
-## Before going live
-- Use HTTPS (hosting with a free certificate) and set `TUKI_HTTPS=1`.
-- Run with `gunicorn app:app`, not `python app.py`.
-- Set `TUKI_SECRET_KEY` to a long random value on the server.
-- Edit delivery charges in `app.py` (`SHIPPING`). Payment is cash on delivery only.
-- Back up `tuki.db` regularly (it holds products and orders). Never share `.secret_key` or `tuki.db`.
-- Behind a proxy (nginx), make sure the real visitor IP reaches the app, or login rate limiting will not work properly.
-- Keep Flask and Python updated (`pip install -U -r requirements.txt`).
+For a new database, `init-db` creates the initial tables and marketplace defaults. For later model changes, create and review a migration before deploying:
 
-## What protects it
-Admin password is hashed; login is rate limited; every form and the order API use CSRF tokens;
-prices are always taken from the database, never from the browser; all database queries are parameterised;
-output is escaped; uploaded photos are verified and re-encoded; security headers (CSP, no framing) are set; admin pages are not cached.
-No website can be promised 100% secure, so keep it updated and use a strong, unique admin password.
+```bash
+flask --app app db init
+flask --app app db migrate -m "describe the schema change"
+flask --app app db upgrade
+```
+
+Keep migration files in version control. Test migrations against a backup/staging database first.
+
+## Admin and seller workflows
+
+1. Sign in at `/login` with the admin account created by the CLI.
+2. In Admin → Wallet numbers, set the receiving number, account type, instructions, and enabled state for each wallet.
+3. Configure shipping, default commission, categories, banners, and coupons in Admin.
+4. Sellers register from “Sell on TUKISHOP”. Admin approves the shop and can set its commission.
+5. Sellers submit products for moderation. Approved products appear in the storefront.
+6. Buyers place an order. Mobile-wallet orders remain pending until an administrator checks the transaction and verifies it.
+7. Sellers fulfill their own packages; administrators can manage all order statuses, COD receipt, cancellation, refunds, and seller payouts.
+
+Never ask buyers or sellers for wallet PINs or OTPs. A transaction ID or receipt image is not proof by itself; verify it against the wallet statement before marking an order paid.
+
+## Configuration
+
+- `DATABASE_URL`: PostgreSQL for production; omitted means local SQLite.
+- `TUKI_SECRET_KEY`: long, random secret for signed sessions. The local app creates `instance/.secret_key` if omitted.
+- `TUKI_HTTPS=1`: enables secure session cookies when HTTPS is active.
+- `RATELIMIT_STORAGE_URI`: use a shared Redis URL in multi-worker or multi-instance production. The default in-memory limiter is for local/single-process use only.
+- `FREE_SHIPPING_MINIMUM` and `DEFAULT_COMMISSION_PERCENT`: first-install defaults; update ongoing settings in Admin.
+
+## Backups and deployment
+
+Back up PostgreSQL and uploaded files regularly, encrypt backups, restrict access, and periodically test a restore. In production, use HTTPS, a managed PostgreSQL provider, persistent or object storage for product photos and private profile photos/receipts, Redis for shared rate limits, and a production WSGI server such as Gunicorn. See [HOSTING.md](./HOSTING.md).
+
+## Integrations to add before operating at large scale
+
+Wallet transfers in this release are intentionally manual: there is no bKash/Nagad/Upay/Rocket API settlement. Courier booking/tracking, SMS/OTP, email receipts, live chat, seller identity verification, advanced product variants, and a native mobile app require external providers, accounts, policies, and additional implementation. Do not advertise those as live until connected and tested.

@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block title %}Wishlist — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block"><div class="section-heading"><div><span class="eyebrow">SAVED FOR LATER</span><h1>My wishlist</h1></div></div>
+{% if products %}<div class="product-grid">{% for product in products %}{% include "_product_card.html" %}{% endfor %}</div>{% else %}<div class="empty-state"><h2>Your wishlist is empty</h2><a class="button" href="{{ url_for('marketplace.home') }}">Discover products</a></div>{% endif %}
+</section>
+{% endblock %}

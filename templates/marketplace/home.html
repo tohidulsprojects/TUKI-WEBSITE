@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}{{ site_name }} — Shop everything{% endblock %}
+{% block content %}
+  <section class="hero">
+    <div class="hero-copy"><span class="eyebrow light">BANGLADESH'S EVERYDAY MARKETPLACE</span><h1>{{ site_tagline }}</h1><p>Discover trusted products from independent sellers, all in one place.</p><a class="button button-light" href="#products">Explore products <span aria-hidden="true">→</span></a></div>
+    <div class="hero-shape shape-one"></div><div class="hero-shape shape-two"></div>
+  </section>
+  {% if banners %}
+  <section class="campaign-row" aria-label="Current campaigns">
+    {% for banner in banners %}
+      <article class="campaign">
+        {% if banner.image %}<img src="{{ url_for('static', filename='uploads/' ~ banner.image) }}" alt="" loading="lazy">{% endif %}
+        <div><span class="eyebrow">TUKISHOP PICKS</span><h2>{{ banner.title }}</h2><p>{{ banner.subtitle }}</p></div>
+      </article>
+    {% endfor %}
+  </section>
+  {% endif %}
+  <section class="section-block">
+    <div class="section-heading"><div><span class="eyebrow">BROWSE THE MARKET</span><h2>Shop by category</h2></div></div>
+    <div class="category-grid">{% for category in categories %}<a class="category-tile" href="{{ url_for('marketplace.home', category=category.id) }}"><span class="category-icon">{{ category.name[:1] }}</span><span>{{ category.name }}</span><span class="arrow">→</span></a>{% endfor %}</div>
+  </section>
+  <section class="section-block" id="products">
+    <div class="section-heading"><div><span class="eyebrow">FIND YOUR NEXT FAVOURITE</span><h2>{% if query %}Search results for “{{ query }}”{% elif selected_category %}Products in this category{% else %}Fresh finds for you{% endif %}</h2></div>
+      <form class="sort-form" method="get" action="{{ url_for('marketplace.home') }}"><input type="hidden" name="q" value="{{ query }}"><input type="hidden" name="category" value="{{ selected_category or '' }}"><label for="sort">Sort</label><select name="sort" id="sort"><option value="popular" {% if sort == 'popular' %}selected{% endif %}>Recommended</option><option value="price_asc" {% if sort == 'price_asc' %}selected{% endif %}>Price: low to high</option><option value="price_desc" {% if sort == 'price_desc' %}selected{% endif %}>Price: high to low</option></select><label class="price-filter"><span class="sr-only">Minimum price</span><input type="number" name="min_price" min="0" placeholder="Min ৳" value="{{ minimum_price if minimum_price is not none else '' }}"></label><label class="price-filter"><span class="sr-only">Maximum price</span><input type="number" name="max_price" min="0" placeholder="Max ৳" value="{{ maximum_price if maximum_price is not none else '' }}"></label><label class="check-control"><input type="checkbox" name="in_stock" value="1" {% if in_stock %}checked{% endif %}> In stock</label><button class="button button-small" type="submit">Apply</button></form>
+    </div>
+    {% if products %}<div class="product-grid">{% for product in products %}{% include "_product_card.html" %}{% endfor %}</div>
+      {% if pagination.pages > 1 %}<nav class="pagination" aria-label="Product pages">{% if pagination.has_prev %}<a class="button button-outline" href="{{ url_for('marketplace.home', q=query, category=selected_category, sort=sort, min_price=minimum_price, max_price=maximum_price, in_stock=1 if in_stock else '', page=pagination.prev_num) }}">Previous</a>{% endif %}<span>Page {{ pagination.page }} of {{ pagination.pages }}</span>{% if pagination.has_next %}<a class="button button-outline" href="{{ url_for('marketplace.home', q=query, category=selected_category, sort=sort, min_price=minimum_price, max_price=maximum_price, in_stock=1 if in_stock else '', page=pagination.next_num) }}">Next</a>{% endif %}</nav>{% endif %}
+    {% else %}<div class="empty-state"><h3>No products found yet</h3><p>Try a different search or check back soon.</p><a href="{{ url_for('marketplace.home') }}">View all products</a></div>{% endif %}
+  </section>
+  <section class="trust-strip"><div><strong>Protected checkout</strong><span>Manual payment verification</span></div><div><strong>Local sellers</strong><span>Discover independent shops</span></div><div><strong>Order updates</strong><span>Track every order in your account</span></div></section>
+{% endblock %}

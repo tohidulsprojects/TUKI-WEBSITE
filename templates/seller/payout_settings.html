@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Payout settings — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block narrow-content"><div class="section-heading"><div><span class="eyebrow">SELLER CENTER</span><h1>Payout settings</h1></div></div>{% include "seller/_nav.html" %}
+<form method="post" class="panel-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><label for="method">Payout wallet</label><select id="method" name="method"><option value="bkash" {% if profile.payout_method=='bkash' %}selected{% endif %}>bKash</option><option value="nagad" {% if profile.payout_method=='nagad' %}selected{% endif %}>Nagad</option><option value="upay" {% if profile.payout_method=='upay' %}selected{% endif %}>Upay</option><option value="rocket" {% if profile.payout_method=='rocket' %}selected{% endif %}>Rocket</option></select><label for="number">Payout number</label><input id="number" name="number" value="{{ profile.payout_number }}" maxlength="30" required><p class="muted small">This payout number is visible only to authorized marketplace admins. Never enter your PIN or OTP.</p><button class="button" type="submit">Save payout details</button></form></section>
+{% endblock %}

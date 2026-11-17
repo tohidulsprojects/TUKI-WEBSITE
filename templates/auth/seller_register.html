@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Become a seller — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="auth-shell"><form method="post" class="auth-card seller-apply"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><span class="eyebrow">SELL ON TUKISHOP</span><h1>Open your marketplace shop</h1><p class="muted">Create your shop profile. Our admin reviews applications before your products can go live.</p><label for="shop-name">Shop name</label><input id="shop-name" name="shop_name" maxlength="100" required><label for="description">Tell buyers about your shop</label><textarea id="description" name="description" maxlength="1000"></textarea><button class="button button-full" type="submit">Submit seller application</button></form></section>
+{% endblock %}

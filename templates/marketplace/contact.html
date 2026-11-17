@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block title %}Contact support — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="auth-shell"><form method="post" class="auth-card"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><span class="eyebrow">WE'RE HERE TO HELP</span><h1>Contact support</h1><p class="muted">For order questions, include your order number in the message.</p><label for="name">Your name</label><input id="name" name="name" value="{{ current_user.name if current_user.is_authenticated else '' }}" maxlength="100" required><label for="phone">Bangladesh mobile number</label><input id="phone" name="phone" type="tel" inputmode="tel" value="{{ current_user.phone if current_user.is_authenticated else '' }}" required><label for="message">How can we help?</label><textarea id="message" name="message" minlength="5" maxlength="1000" required></textarea><button class="button button-full" type="submit">Send message</button>{% if support_phone %}<p class="auth-foot">Call support: {{ support_phone }}</p>{% endif %}</form></section>
+{% endblock %}

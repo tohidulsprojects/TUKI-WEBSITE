@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}Admin overview — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block admin-content"><div class="section-heading"><div><span class="eyebrow">MARKETPLACE CONTROL</span><h1>Admin overview</h1></div><a class="button button-outline" href="{{ url_for('admin.reports_csv') }}">Download orders CSV</a></div>
+{% include "admin/_nav.html" %}
+<div class="stats-grid">{% for label, value in [('Orders', stats.orders), ('Sales', '৳' ~ stats.sales), ('Pending payments', stats.pending_payments), ('Seller applications', stats.pending_sellers), ('Products to review', stats.pending_products), ('Active sellers', stats.sellers), ('Customers', stats.customers)] %}<article class="stat-card"><span>{{ label }}</span><strong>{{ value }}</strong></article>{% endfor %}</div>
+<div class="admin-columns"><section class="panel-card"><h2>Recent orders</h2>{% for order in orders %}<a class="compact-row" href="{{ url_for('admin.orders') }}"><span><strong>#{{ order.id }} · {{ order.name }}</strong><small>{{ order.created_at.strftime('%d %b %Y') }} · {{ order.status|title }}</small></span><strong>৳{{ order.total }}</strong></a>{% else %}<p class="muted">No orders yet.</p>{% endfor %}</section>
+<section class="panel-card"><h2>Recent admin activity</h2>{% for log in logs %}<div class="compact-row"><span><strong>{{ log.action|replace('_',' ')|title }}</strong><small>{{ log.details }}</small></span><time>{{ log.created_at.strftime('%d %b %H:%M') }}</time></div>{% else %}<p class="muted">Actions are recorded here.</p>{% endfor %}</section></div>
+</section>
+{% endblock %}

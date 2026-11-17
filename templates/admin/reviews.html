@@ -1,0 +1,6 @@
+{% extends "base.html" %}
+{% block title %}Review moderation — {{ site_name }}{% endblock %}
+{% block content %}
+<section class="section-block admin-content"><div class="section-heading"><div><span class="eyebrow">BUYER TRUST</span><h1>Review moderation</h1></div></div>{% include "admin/_nav.html" %}
+{% for review in reviews %}<article class="panel-card admin-record"><div class="record-heading"><div><span class="eyebrow">{{ 'VISIBLE' if review.active else 'HIDDEN' }}</span><h2>{{ review.product.name }} · <span class="stars">{{ '★' * review.stars }}</span></h2><p>{{ review.customer.name }} · {{ review.created_at.strftime('%d %b %Y') }}</p><p>{{ review.text }}</p></div><form method="post" action="{{ url_for('admin.toggle_review', review_id=review.id) }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button class="button button-outline" type="submit">{{ 'Hide review' if review.active else 'Show review' }}</button></form></div></article>{% else %}<p class="muted">No reviews yet.</p>{% endfor %}</section>
+{% endblock %}
