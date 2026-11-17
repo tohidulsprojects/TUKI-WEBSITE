@@ -319,14 +319,14 @@
   $("tReg").onclick = function () { form(false); };
   $("fLogin").onsubmit = function (e) {
     e.preventDefault();
-    api("/api/login", { phone: $("lp").value, password: $("lw").value, remember: $("lrem").checked }).then(function (j) {
+    api("/api/login", { username: $("lp").value, password: $("lw").value, remember: $("lrem").checked }).then(function (j) {
       if (!j.ok) { $("lerr").textContent = j.error; return; }
       ME = j.user; setTimeout(function () { $("lw").value = ""; }, 1500); $("lerr").textContent = ""; $("amsg").textContent = ""; ui(); loadOrders();
     }).catch(bad("lerr"));
   };
   $("fReg").onsubmit = function (e) {
     e.preventDefault();
-    api("/api/register", { name: $("rn").value, phone: $("rp").value, password: $("rw").value, remember: $("rrem").checked }).then(function (j) {
+    api("/api/register", { name: $("rn").value, username: $("ru").value, phone: $("rp").value, password: $("rw").value, remember: $("rrem").checked }).then(function (j) {
       if (!j.ok) { $("rerr").textContent = j.error; return; }
       ME = j.user; setTimeout(function () { $("rw").value = ""; }, 1500); $("rerr").textContent = ""; $("amsg").textContent = ""; ui(); loadOrders();
     }).catch(bad("rerr"));

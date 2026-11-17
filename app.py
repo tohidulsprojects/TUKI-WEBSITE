@@ -92,7 +92,8 @@ CREATE TABLE IF NOT EXISTS orders(
   status TEXT NOT NULL DEFAULT 'new', created TEXT DEFAULT CURRENT_TIMESTAMP,
   customer_id INTEGER);
 CREATE TABLE IF NOT EXISTS customers(
-  id INTEGER PRIMARY KEY, name TEXT NOT NULL, phone TEXT UNIQUE NOT NULL,
+  id INTEGER PRIMARY KEY, name TEXT NOT NULL, username TEXT NOT NULL COLLATE NOCASE UNIQUE,
+  phone TEXT UNIQUE NOT NULL,
   pw_hash TEXT NOT NULL, created TEXT DEFAULT CURRENT_TIMESTAMP);
 CREATE TABLE IF NOT EXISTS order_items(
   id INTEGER PRIMARY KEY, order_id INTEGER NOT NULL REFERENCES orders(id),
@@ -128,6 +129,12 @@ def init_db():
         con.execute("ALTER TABLE products ADD COLUMN stock INTEGER NOT NULL DEFAULT 100")  # existing products: set the real quantity in admin
     if "customer_id" not in [r[1] for r in con.execute("PRAGMA table_info(orders)")]:
         con.execute("ALTER TABLE orders ADD COLUMN customer_id INTEGER")
+    customer_cols = [r[1] for r in con.execute("PRAGMA table_info(customers)")]
+    if "username" not in customer_cols:
+        con.execute("ALTER TABLE customers ADD COLUMN username TEXT")
+    con.execute("UPDATE customers SET username=phone WHERE username IS NULL OR username=''")
+    con.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_username "
+                "ON customers(username COLLATE NOCASE)")
     ocols = [r[1] for r in con.execute("PRAGMA table_info(orders)")]
     for col in ("district", "upazila"):
         if col not in ocols:
@@ -450,6 +457,13 @@ def norm_phone(value):
     return digits if re.fullmatch(r"\d{10,15}", digits) else None
 
 
+def norm_username(value):
+    username = str(value or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{2,29}", username):
+        return None
+    return username.lower()
+
+
 def cust_row():
     cid = session.get("cust")
     if not cid:
@@ -466,7 +480,7 @@ def login_customer(row, remember=True):
 def api_me():
     c = cust_row()
     return jsonify(ok=True, require_login=REQUIRE_LOGIN,
-                   user={"name": c["name"], "phone": c["phone"]} if c else None)
+                   user={"name": c["name"], "username": c["username"], "phone": c["phone"]} if c else None)
 
 
 @app.post("/api/register")
@@ -476,17 +490,19 @@ def api_register():
     if limited("reg", ip, 10, 3600):
         return jsonify(ok=False, error="Too many tries. Please wait a while."), 429
     d = request.get_json(silent=True) or {}
-    name, phone, pw = clean(d.get("name"), 80), norm_phone(d.get("phone")), str(d.get("password", ""))
-    if not name or not phone or not 8 <= len(pw) <= 200:
-        return jsonify(ok=False, error="Enter your name, a valid phone number, and a password of at least 8 characters."), 400
+    name = clean(d.get("name"), 80)
+    username, phone, pw = norm_username(d.get("username")), norm_phone(d.get("phone")), str(d.get("password", ""))
+    if not name or not username or not phone or not 8 <= len(pw) <= 200:
+        return jsonify(ok=False, error="Enter your name, a username (3-30 letters, numbers, dots, dashes or underscores), a valid phone number, and a password of at least 8 characters."), 400
     hit("reg", ip)
-    if db().execute("SELECT 1 FROM customers WHERE phone=?", (phone,)).fetchone():
-        return jsonify(ok=False, error="This phone number already has an account. Please log in."), 400
-    cur = db().execute("INSERT INTO customers(name,phone,pw_hash) VALUES(?,?,?)",
-                       (name, phone, generate_password_hash(pw)))
+    if db().execute("SELECT 1 FROM customers WHERE phone=? OR username=? COLLATE NOCASE",
+                    (phone, username)).fetchone():
+        return jsonify(ok=False, error="That username or phone number already has an account. Please log in."), 400
+    cur = db().execute("INSERT INTO customers(name,username,phone,pw_hash) VALUES(?,?,?,?)",
+                       (name, username, phone, generate_password_hash(pw)))
     db().commit()
     login_customer({"id": cur.lastrowid}, d.get("remember", True))
-    return jsonify(ok=True, user={"name": name, "phone": phone})
+    return jsonify(ok=True, user={"name": name, "username": username, "phone": phone})
 
 
 @app.post("/api/login")
@@ -496,14 +512,16 @@ def api_login():
     if limited("clogin", ip, 10, 900):
         return jsonify(ok=False, error="Too many wrong tries. Please wait 15 minutes."), 429
     d = request.get_json(silent=True) or {}
-    phone, pw = norm_phone(d.get("phone")), str(d.get("password", ""))
-    row = db().execute("SELECT * FROM customers WHERE phone=?", (phone,)).fetchone() if phone else None
+    login_name = d.get("username") or d.get("phone")
+    username, pw = norm_username(login_name) or norm_phone(login_name), str(d.get("password", ""))
+    row = db().execute("SELECT * FROM customers WHERE username=? COLLATE NOCASE",
+                       (username,)).fetchone() if username else None
     ok = check_password_hash(row["pw_hash"] if row else DUMMY_CUSTOMER_HASH, pw)
     if row and ok:
         login_customer(row, d.get("remember", True))
-        return jsonify(ok=True, user={"name": row["name"], "phone": row["phone"]})
+        return jsonify(ok=True, user={"name": row["name"], "username": row["username"], "phone": row["phone"]})
     hit("clogin", ip)
-    return jsonify(ok=False, error="Wrong phone number or password."), 401
+    return jsonify(ok=False, error="Wrong username or password."), 401
 
 
 @app.post("/api/logout")
@@ -672,7 +690,7 @@ def admin():
         its = conn.execute("SELECT name,price,qty FROM order_items WHERE order_id=?", (o["id"],)).fetchall()
         orders.append((o, its))
     customers = conn.execute(
-        "SELECT c.id,c.name,c.phone,c.created,(SELECT COUNT(*) FROM orders o WHERE o.customer_id=c.id) AS n "
+        "SELECT c.id,c.name,c.username,c.phone,c.created,(SELECT COUNT(*) FROM orders o WHERE o.customer_id=c.id) AS n "
         "FROM customers c ORDER BY c.id DESC LIMIT 200").fetchall()
     categories = conn.execute(
         "SELECT c.id,c.name,c.active,(SELECT COUNT(*) FROM products p WHERE p.category=c.name) AS n "
@@ -1069,7 +1087,7 @@ def delete_banner(bid):
 
 def create_admin():
     init_db()
-    user = input("Admin username: ").strip()
+    user = input("Admin username [fuvkyou]: ").strip() or "fuvkyou"
     pw = getpass.getpass("Admin password (12+ characters): ")
     if not user or len(pw) < 12 or pw != getpass.getpass("Repeat password: "):
         sys.exit("Username missing, password too short, or passwords differ.")

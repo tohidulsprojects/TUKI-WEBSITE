@@ -6,16 +6,16 @@ Buyer shop at `/`, protected admin at `/admin` (you can move it to a secret addr
 1. Install Python 3.10+.
 2. `python -m venv venv`, then activate it (Windows: `venv\Scripts\activate`, Mac/Linux: `source venv/bin/activate`)
 3. `pip install -r requirements.txt`
-4. `python app.py create-admin` (choose a username and a password of 12+ characters)
+4. `python app.py create-admin` (press Enter to use admin username `fuvkyou`, then choose a unique password of 12+ characters when prompted)
 5. `python app.py`, then open http://127.0.0.1:5000 (admin: http://127.0.0.1:5000/admin/login)
 
 ## Customer accounts
-Customers sign up with name, phone number and a password (8+ characters), then log in to order. Under **Account** they automatically see **My orders** (items, delivery details, total, status, updated when you change the status in admin), and can change their password. Passwords are stored hashed; wrong logins are rate limited.
+Customers sign up with a name, username, phone number and a password (8+ characters), then log in with their username and password to order. Usernames are 3-30 letters, numbers, dots, dashes or underscores. Under **Account** they automatically see **My orders** (items, delivery details, total, status, updated when you change the status in admin), and can change their password. Passwords are stored hashed; wrong logins are rate limited. Existing accounts keep working with their current phone number as their username.
 - There is no SMS or email, so a customer who forgets the password asks you, and you set a new one in the admin under **Customers** (then tell them privately).
 - To also allow orders without an account, start the server with `TUKI_REQUIRE_LOGIN=0`.
 
 ### Staying logged in
-Customers stay logged in on their phone for 30 days (the **Keep me logged in** box is ticked by default; untick it on a shared phone). The login forms are built so the phone or browser offers to save the phone number and password and fill them in next time. The shop never stores a customer's password itself, only a hash. Admin logins always expire after 2 hours.
+Customers stay logged in on their phone for 30 days (the **Keep me logged in** box is ticked by default; untick it on a shared phone). The login forms are built so the phone or browser offers to save the username and password and fill them in next time. The shop never stores a customer's password itself, only a hash. Admin logins always expire after 2 hours.
 
 ## Change or reset the admin password
 Change it any time in the admin panel (Change password section). If you forget it, run `python app.py create-admin` again and choose a new one.

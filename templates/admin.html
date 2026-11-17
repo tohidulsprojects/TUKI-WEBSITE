@@ -81,7 +81,7 @@ Delivery to: {% if o.district %}{{ o.upazila }}, {{ o.district }}{% else %}{{ o.
 <h2>Customers ({{ customers|length }})</h2>
 {% for c in customers %}
 <div class="box">
-<strong>{{ c.name }}</strong> <small class="msg">{{ c.phone }} · {{ c.n }} order{{ '' if c.n == 1 else 's' }} · joined {{ c.created }}</small>
+<strong>{{ c.name }}</strong> <small class="msg">@{{ c.username }} · {{ c.phone }} · {{ c.n }} order{{ '' if c.n == 1 else 's' }} · joined {{ c.created }}</small>
 <form method="post" action="{{ url_for('reset_customer_password', cid=c.id) }}">
 <input type="hidden" name="csrf" value="{{ csrf_token() }}"><input type="hidden" name="tab" value="Customers">
 <label for="rp{{ c.id }}">Set a new password (if they forgot it)</label>

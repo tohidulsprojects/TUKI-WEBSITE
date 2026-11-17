@@ -146,7 +146,7 @@
 <div class="tabs"><button class="tab" id="tLogin" aria-pressed="true">Log in</button><button class="tab" id="tReg" aria-pressed="false">Sign up</button></div>
 <form id="fLogin" method="post" action="#" autocomplete="on">
 <h2>Log in</h2>
-<label for="lp">Phone number</label><input id="lp" name="username" type="tel" inputmode="tel" autocomplete="username" maxlength="20">
+<label for="lp">Username</label><input id="lp" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="30" required>
 <label for="lw">Password</label><input id="lw" name="password" type="password" autocomplete="current-password" maxlength="200">
 <label class="check"><input type="checkbox" id="lrem" checked> Keep me logged in on this phone</label>
 <p class="msg" id="lerr" role="alert"></p>
@@ -155,7 +155,8 @@
 <form id="fReg" method="post" action="#" autocomplete="on" hidden>
 <h2>Create account</h2>
 <label for="rn">Your name</label><input id="rn" name="name" autocomplete="name" maxlength="80">
-<label for="rp">Phone number</label><input id="rp" name="username" type="tel" inputmode="tel" autocomplete="username" maxlength="20">
+<label for="ru">Username (3-30 letters, numbers, . _ -)</label><input id="ru" name="username" autocomplete="username" autocapitalize="none" spellcheck="false" minlength="3" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9_.-]{2,29}" required>
+<label for="rp">Phone number</label><input id="rp" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20">
 <label for="rw">Password (8+ characters)</label><input id="rw" name="password" type="password" autocomplete="new-password" maxlength="200">
 <label class="check"><input type="checkbox" id="rrem" checked> Keep me logged in on this phone</label>
 <p class="msg" id="rerr" role="alert"></p>
